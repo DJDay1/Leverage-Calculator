@@ -100,9 +100,9 @@
             
             let thresholdPrice;
             if (position === 'long') {
-                thresholdPrice = currentPrice * (1 + (fee * 2 + slippage) / leverage);
+                thresholdPrice = currentPrice * (1 + (fee * 2 + slippage));
             } else {
-                thresholdPrice = currentPrice * (1 - (fee * 2 + slippage) / leverage);
+                thresholdPrice = currentPrice * (1 - (fee * 2 + slippage));
             }
             
             const thresholdPercentage = ((thresholdPrice / currentPrice) - 1) * 100;
