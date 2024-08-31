@@ -59,10 +59,13 @@
         <h1>레버리지 계산기</h1>
         <form id="leverageForm">
             <label for="currentPrice">현재 가격:</label>
-            <input type="number" id="currentPrice" required step="0.00000001">
+            <input type="number" id="currentPrice" required step="0.01">
             
-            <label for="targetPrice">목표 가격 (선택사항):</label>
-            <input type="number" id="targetPrice" step="0.00000001">
+            <label for="investmentAmount">투자 금액:</label>
+            <input type="number" id="investmentAmount" required step="0.01">
+            
+            <label for="leverage">레버리지:</label>
+            <input type="number" id="leverage" required min="1" max="125" step="1" value="1">
             
             <label for="position">포지션:</label>
             <select id="position" required>
@@ -86,39 +89,36 @@
             e.preventDefault();
             
             const currentPrice = parseFloat(document.getElementById('currentPrice').value);
-            const targetPrice = parseFloat(document.getElementById('targetPrice').value) || null;
+            const investmentAmount = parseFloat(document.getElementById('investmentAmount').value);
+            const leverage = parseInt(document.getElementById('leverage').value);
             const position = document.getElementById('position').value;
             const fee = parseFloat(document.getElementById('fee').value) / 100;
             const slippage = parseFloat(document.getElementById('slippage').value) / 100;
             
+            const totalInvestment = investmentAmount * leverage;
+            const contractSize = totalInvestment / currentPrice;
+            
             let thresholdPrice;
             if (position === 'long') {
-                thresholdPrice = currentPrice * (1 + 2 * fee + slippage);
+                thresholdPrice = currentPrice * (1 + (fee * 2 + slippage) / leverage);
             } else {
-                thresholdPrice = currentPrice * (1 - 2 * fee - slippage);
+                thresholdPrice = currentPrice * (1 - (fee * 2 + slippage) / leverage);
             }
+            
+            const thresholdPercentage = ((thresholdPrice / currentPrice) - 1) * 100;
+            const thresholdAmount = Math.abs(thresholdPercentage * investmentAmount / 100);
             
             let resultText = `
                 포지션: ${position === 'long' ? '롱' : '숏'}<br>
-                현재 가격: ${currentPrice.toFixed(8)}<br>
-                역치값 (손익분기점): ${thresholdPrice.toFixed(8)}<br>
-                필요 가격 변동률: ${(((thresholdPrice / currentPrice) - 1) * 100).toFixed(4)}%
+                현재 가격: $${currentPrice.toFixed(2)}<br>
+                투자 금액: $${investmentAmount.toFixed(2)}<br>
+                레버리지: ${leverage}x<br>
+                총 포지션 크기: $${totalInvestment.toFixed(2)}<br>
+                계약 수량: ${contractSize.toFixed(8)} BTC<br>
+                역치값 (손익분기점): $${thresholdPrice.toFixed(2)}<br>
+                필요 가격 변동률: ${thresholdPercentage.toFixed(4)}%<br>
+                손익분기 금액: $${thresholdAmount.toFixed(2)}
             `;
-            
-            if (targetPrice !== null) {
-                let profit;
-                if (position === 'long') {
-                    profit = (targetPrice - thresholdPrice) / currentPrice * 100;
-                } else {
-                    profit = (thresholdPrice - targetPrice) / currentPrice * 100;
-                }
-                
-                resultText += `<br><br>
-                    목표 가격: ${targetPrice.toFixed(8)}<br>
-                    예상 이익률: ${profit.toFixed(4)}%<br>
-                    역치 대비 추가 이익: ${(profit - (((thresholdPrice / currentPrice) - 1) * 100)).toFixed(4)}%
-                `;
-            }
             
             document.getElementById('result').innerHTML = resultText;
         });
