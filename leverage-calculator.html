@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>레버리지 계산기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>레버리지 계산기</h1>
+        <form id="leverageForm">
+            <label for="currentPrice">현재 가격:</label>
+            <input type="number" id="currentPrice" required step="0.01">
+            
+            <label for="targetPrice">목표 가격:</label>
+            <input type="number" id="targetPrice" required step="0.01">
+            
+            <label for="maxLeverage">최대 레버리지 (1-125):</label>
+            <input type="number" id="maxLeverage" value="50" min="1" max="125" required>
+            
+            <label for="fee">수수료 (%):</label>
+            <input type="number" id="fee" value="0.036" step="0.001" required>
+            
+            <button type="submit">계산하기</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('leverageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const currentPrice = parseFloat(document.getElementById('currentPrice').value);
+            const targetPrice = parseFloat(document.getElementById('targetPrice').value);
+            const maxLeverage = parseInt(document.getElementById('maxLeverage').value);
+            const fee = parseFloat(document.getElementById('fee').value) / 100;
+            
+            let bestLeverage = 1;
+            let maxProfit = -Infinity;
+            
+            for (let leverage = 1; leverage <= maxLeverage; leverage++) {
+                const priceChange = (targetPrice - currentPrice) / currentPrice;
+                const grossProfit = priceChange * leverage;
+                const tradeFee = fee * 2 * leverage;  // Opening and closing positions
+                const netProfit = grossProfit - tradeFee;
+                
+                if (netProfit > maxProfit) {
+                    maxProfit = netProfit;
+                    bestLeverage = leverage;
+                }
+            }
+            
+            const resultText = `최적의 레버리지: ${bestLeverage}배<br>예상 수익률: ${(maxProfit * 100).toFixed(2)}%`;
+            document.getElementById('result').innerHTML = resultText;
+        });
+    </script>
+</body>
+</html>
