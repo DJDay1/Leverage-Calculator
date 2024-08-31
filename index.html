@@ -98,10 +98,10 @@
             
             for (let leverage = 1; leverage <= maxLeverage; leverage++) {
                 const totalFee = 2 * fee * leverage * currentPrice;
-                const profitBeforeFee = Math.abs(priceChange) * leverage;
-                const netProfit = profitBeforeFee - totalFee;
+                const grossProfit = Math.abs(priceChange) * leverage;
+                const netProfit = grossProfit - totalFee;
                 
-                details += `레버리지 ${leverage}배: 수수료 ${totalFee.toFixed(4)}, 이익 ${netProfit.toFixed(4)}<br>`;
+                details += `레버리지 ${leverage}배: 수수료 ${totalFee.toFixed(4)}, 총이익 ${grossProfit.toFixed(4)}, 순이익 ${netProfit.toFixed(4)}<br>`;
                 
                 if (netProfit > maxProfit) {
                     maxProfit = netProfit;
