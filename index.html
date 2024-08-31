@@ -59,16 +59,16 @@
         <h1>레버리지 계산기</h1>
         <form id="leverageForm">
             <label for="currentPrice">현재 가격:</label>
-            <input type="number" id="currentPrice" required step="0.01">
+            <input type="number" id="currentPrice" required step="0.00000001">
             
             <label for="targetPrice">목표 가격:</label>
-            <input type="number" id="targetPrice" required step="0.01">
+            <input type="number" id="targetPrice" required step="0.00000001">
             
             <label for="maxLeverage">최대 레버리지 (1-125):</label>
             <input type="number" id="maxLeverage" value="50" min="1" max="125" required>
             
             <label for="fee">수수료 (%):</label>
-            <input type="number" id="fee" value="0.036" step="0.001" required>
+            <input type="number" id="fee" value="0.036" step="0.0001" required>
             
             <button type="submit">계산하기</button>
         </form>
@@ -87,11 +87,15 @@
             let bestLeverage = 1;
             let maxProfit = -Infinity;
             
+            const priceChange = (targetPrice - currentPrice) / currentPrice;
+            const isLong = priceChange > 0;
+            
             for (let leverage = 1; leverage <= maxLeverage; leverage++) {
-                const priceChange = (targetPrice - currentPrice) / currentPrice;
-                const grossProfit = priceChange * leverage;
-                const tradeFee = fee * 2 * leverage;  // Opening and closing positions
-                const netProfit = grossProfit - tradeFee;
+                const grossProfit = Math.abs(priceChange) * leverage;
+                const entryFee = fee * leverage;
+                const exitFee = fee * leverage * (1 + Math.abs(priceChange));
+                const totalFee = entryFee + exitFee;
+                const netProfit = grossProfit - totalFee;
                 
                 if (netProfit > maxProfit) {
                     maxProfit = netProfit;
@@ -99,7 +103,8 @@
                 }
             }
             
-            const resultText = `최적의 레버리지: ${bestLeverage}배<br>예상 수익률: ${(maxProfit * 100).toFixed(2)}%`;
+            const positionType = isLong ? "롱" : "숏";
+            const resultText = `포지션: ${positionType}<br>최적의 레버리지: ${bestLeverage}배<br>예상 수익률: ${(maxProfit * 100).toFixed(4)}%`;
             document.getElementById('result').innerHTML = resultText;
         });
     </script>
