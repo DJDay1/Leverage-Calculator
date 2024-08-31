@@ -52,6 +52,10 @@
             margin-top: 20px;
             font-weight: bold;
         }
+        #details {
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -73,6 +77,7 @@
             <button type="submit">계산하기</button>
         </form>
         <div id="result"></div>
+        <div id="details"></div>
     </div>
 
     <script>
@@ -85,25 +90,29 @@
             const fee = parseFloat(document.getElementById('fee').value) / 100;
             
             let bestLeverage = 1;
-            let maxNetProfit = -Infinity;
+            let maxProfit = -Infinity;
+            let details = "";
             
-            const priceChange = (targetPrice - currentPrice) / currentPrice;
+            const priceChange = targetPrice - currentPrice;
             const isLong = priceChange > 0;
             
             for (let leverage = 1; leverage <= maxLeverage; leverage++) {
-                const grossProfit = Math.abs(priceChange) * leverage;
-                const totalFee = 2 * fee * leverage; // Entry and exit fees
-                const netProfit = grossProfit - totalFee;
+                const totalFee = 2 * fee * leverage * currentPrice;
+                const profitBeforeFee = Math.abs(priceChange) * leverage;
+                const netProfit = profitBeforeFee - totalFee;
                 
-                if (netProfit > maxNetProfit) {
-                    maxNetProfit = netProfit;
+                details += `레버리지 ${leverage}배: 수수료 ${totalFee.toFixed(4)}, 이익 ${netProfit.toFixed(4)}<br>`;
+                
+                if (netProfit > maxProfit) {
+                    maxProfit = netProfit;
                     bestLeverage = leverage;
                 }
             }
             
             const positionType = isLong ? "롱" : "숏";
-            const resultText = `포지션: ${positionType}<br>최적의 레버리지: ${bestLeverage}배<br>예상 순이익률: ${(maxNetProfit * 100).toFixed(4)}%`;
+            const resultText = `포지션: ${positionType}<br>최적의 레버리지: ${bestLeverage}배<br>예상 순이익: ${maxProfit.toFixed(4)}`;
             document.getElementById('result').innerHTML = resultText;
+            document.getElementById('details').innerHTML = details;
         });
     </script>
 </body>
