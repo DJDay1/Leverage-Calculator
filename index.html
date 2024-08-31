@@ -28,7 +28,7 @@
             display: block;
             margin-bottom: 5px;
         }
-        input[type="number"] {
+        input[type="number"], select {
             width: 100%;
             padding: 8px;
             margin-bottom: 10px;
@@ -52,10 +52,6 @@
             margin-top: 20px;
             font-weight: bold;
         }
-        #details {
-            margin-top: 20px;
-            font-size: 0.9em;
-        }
     </style>
 </head>
 <body>
@@ -65,19 +61,21 @@
             <label for="currentPrice">현재 가격:</label>
             <input type="number" id="currentPrice" required step="0.00000001">
             
-            <label for="targetPrice">목표 가격:</label>
-            <input type="number" id="targetPrice" required step="0.00000001">
-            
-            <label for="maxLeverage">최대 레버리지 (1-125):</label>
-            <input type="number" id="maxLeverage" value="125" min="1" max="125" required>
+            <label for="position">포지션:</label>
+            <select id="position" required>
+                <option value="long">롱</option>
+                <option value="short">숏</option>
+            </select>
             
             <label for="fee">수수료 (%):</label>
             <input type="number" id="fee" value="0.036" step="0.0001" required>
             
+            <label for="slippage">예상 슬리피지 (%):</label>
+            <input type="number" id="slippage" value="0.05" step="0.01" required>
+            
             <button type="submit">계산하기</button>
         </form>
         <div id="result"></div>
-        <div id="details"></div>
     </div>
 
     <script>
@@ -85,33 +83,25 @@
             e.preventDefault();
             
             const currentPrice = parseFloat(document.getElementById('currentPrice').value);
-            const targetPrice = parseFloat(document.getElementById('targetPrice').value);
-            const maxLeverage = parseInt(document.getElementById('maxLeverage').value);
+            const position = document.getElementById('position').value;
             const fee = parseFloat(document.getElementById('fee').value) / 100;
+            const slippage = parseFloat(document.getElementById('slippage').value) / 100;
             
-            let bestLeverage = 1;
-            let maxProfit = -Infinity;
-            let details = "";
-            
-            const priceChange = targetPrice - currentPrice;
-            const isLong = priceChange > 0;
-            
-            for (let leverage = 1; leverage <= maxLeverage; leverage++) {
-                const totalFee = 2 * fee * currentPrice * leverage;
-                const netProfit = (priceChange - (currentPrice * fee * 2)) * leverage;
-                
-                details += `레버리지 ${leverage}배: 수수료 ${totalFee.toFixed(4)}, 순이익 ${netProfit.toFixed(4)}<br>`;
-                
-                if (netProfit > maxProfit) {
-                    maxProfit = netProfit;
-                    bestLeverage = leverage;
-                }
+            let thresholdPrice;
+            if (position === 'long') {
+                thresholdPrice = currentPrice * (1 + 2 * fee + slippage);
+            } else {
+                thresholdPrice = currentPrice * (1 - 2 * fee - slippage);
             }
             
-            const positionType = isLong ? "롱" : "숏";
-            const resultText = `포지션: ${positionType}<br>최적의 레버리지: ${bestLeverage}배<br>예상 순이익: ${maxProfit.toFixed(4)}`;
+            const resultText = `
+                포지션: ${position === 'long' ? '롱' : '숏'}<br>
+                현재 가격: ${currentPrice.toFixed(8)}<br>
+                역치값 (손익분기점): ${thresholdPrice.toFixed(8)}<br>
+                필요 가격 변동률: ${(((thresholdPrice / currentPrice) - 1) * 100).toFixed(4)}%
+            `;
+            
             document.getElementById('result').innerHTML = resultText;
-            document.getElementById('details').innerHTML = details;
         });
     </script>
 </body>
